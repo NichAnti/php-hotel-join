@@ -24,85 +24,91 @@
       return $this->lastname;
     }
 
-    public static function getOspitiById($conn, $id) {
-
-      $sql = "
-
-        SELECT *
-        FROM ospiti
-        WHERE id = $id
-
-      ";
-
-      $result = $conn->query($sql);
-
-
-      if ($result->num_rows > 0) {
-
-        $row = $result->fetch_assoc();
-
-        $ospite = new Ospite($row["id"], $row["name"], $row["lastname"]);
-
-      }
-
-      return $ospite;
-    }
-  }
-
-  class Prenotazione_has_ospiti {
-
-    private $id;
-    private $prenotazione_id;
-    private $ospite_id;
-
-    public function __construct($id, $prenotazione_id, $ospite_id) {
-
-      $this->id = $id;
-      $this->prenotazione_id = $prenotazione_id;
-      $this->ospite_id = $ospite_id;
-    }
-
-    function getId() {
-
-      return $this->id;
-    }
-
-    function getPrenotazioneId() {
-
-      return $this->prenotazione_id;
-    }
-
-    function getOspiteId() {
-
-      return $this->ospite_id;
-    }
-
-    public static function getPreHasOspByPrenotazioneId($conn, $id) {
+    public static function getOspitiByPrenId($conn, $id) {
 
       $sql = "
 
         SELECT *
         FROM prenotazioni_has_ospiti
+        RIGHT JOIN ospiti
+        ON prenotazioni_has_ospiti.ospite_id  = ospiti.id
         WHERE prenotazione_id = $id
 
       ";
 
       $result = $conn->query($sql);
 
+
       if ($result->num_rows > 0) {
 
-        $preHasOsp = [];
+        $ospiti = [];
 
         while($row = $result->fetch_assoc()) {
 
-          $preHasOsp[] = new Prenotazione_has_ospiti($row["id"], $row["prenotazione_id"], $row["ospite_id"]);
+          $ospiti[] = new Ospite($row["id"], $row["name"], $row["lastname"]);
         }
 
-        return $preHasOsp;
-      }
-    }
 
+      }
+
+      return $ospiti;
+    }
   }
+
+  // class Prenotazione_has_ospiti {
+  //
+  //   private $id;
+  //   private $prenotazione_id;
+  //   private $ospite_id;
+  //
+  //   public function __construct($id, $prenotazione_id, $ospite_id) {
+  //
+  //     $this->id = $id;
+  //     $this->prenotazione_id = $prenotazione_id;
+  //     $this->ospite_id = $ospite_id;
+  //   }
+  //
+  //   function getId() {
+  //
+  //     return $this->id;
+  //   }
+  //
+  //   function getPrenotazioneId() {
+  //
+  //     return $this->prenotazione_id;
+  //   }
+  //
+  //   function getOspiteId() {
+  //
+  //     return $this->ospite_id;
+  //   }
+  //
+  //   public static function getPreHasOspByPrenotazioneId($conn, $id) {
+  //
+  //     $sql = "
+  //
+  //       SELECT *
+  //       FROM prenotazioni_has_ospiti
+  //       WHERE prenotazione_id = $id
+  //
+  //     ";
+  //
+  //     $result = $conn->query($sql);
+  //
+  //     if ($result->num_rows > 0) {
+  //
+  //       $preHasOsp = [];
+  //
+  //       while($row = $result->fetch_assoc()) {
+  //
+  //         $preHasOsp[] = new Prenotazione_has_ospiti($row["id"], $row["prenotazione_id"], $row["ospite_id"]);
+  //       }
+  //
+  //       return $preHasOsp;
+  //     }
+  //   }
+  //
+  // }
 
   class Pagamento {
 
@@ -345,14 +351,14 @@
     $configurazione = Configurazione::getConfigurazioneById($conn, $configurazione_id);
     $pagamento = Pagamento::getPagamentoByPrenotazioneId($conn, $prenotazioneArr["id"]);
 
-    $prenotazioneOspitiArr = Prenotazione_has_ospiti::getPreHasOspByPrenotazioneId($conn, $prenotazioneArr["id"]);
+    // $prenotazioneOspitiArr = Prenotazione_has_ospiti::getPreHasOspByPrenotazioneId($conn, $prenotazioneArr["id"]);
+    // $ospiti = [];
+    // foreach ($prenotazioneOspitiArr as $prenotazioneOspite) {
+    //
+    //   $ospiti[] = Ospite::getOspitiById($conn, $prenotazioneOspite->getOspiteId());
+    // }
 
-    $ospiti = [];
-
-    foreach ($prenotazioneOspitiArr as $prenotazioneOspite) {
-
-      $ospiti[] = Ospite::getOspitiById($conn, $prenotazioneOspite->getOspiteId());
-    }
+    $ospiti = Ospite::getOspitiByPrenId($conn, $prenotazioneArr["id"]);
 
     echo "Prenotazione: " . $prenotazioneArr["id"] . "<br>" .
           "- stanza: " . $stanza->getId() . "; number: " . $stanza->getRoomNumber() . "; floor: " . $stanza->getFloor() . "; beds: " . $stanza->getBeds() . "<br>" .
